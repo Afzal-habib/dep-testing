@@ -4,8 +4,6 @@
 
 right now there are many issues and need many improvements and new things
 
-ddssdsd
-
 ### prompt for ai  now not focus on this one 
 
 use the provided .md files to understand the flow and current project structure of this crm and than meet my requirements mention below 
