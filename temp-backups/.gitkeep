@@ -1,0 +1,4 @@
+# Temporary Backups Directory
+
+This directory is used for temporary backup files during the create-and-download process.
+Files in this directory are automatically cleaned up after download.

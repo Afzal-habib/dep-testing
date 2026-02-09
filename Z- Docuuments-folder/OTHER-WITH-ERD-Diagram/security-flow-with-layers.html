@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>CRM 7-Layer Security Architecture - Multi-Tier Protection System</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <script>
+        mermaid.initialize({
+            theme: 'default',
+            startOnLoad: true,
+            flowchart: {
+                nodeSpacing: 40,
+                rankSpacing: 60,
+                curve: 'basis',
+                padding: 30
+            },
+            themeVariables: {
+                fontSize: '18px',
+                fontFamily: 'Arial Black, Arial, sans-serif',
+                fontWeight: 'bold'
+            }
+        });
+    </script>
+    <style>
+        body {
+            background-color: white;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            /* width: 100vw; */
+            /* height: 100vh; */
+            /* overflow: hidden; */
+        }
+
+        .diagram-container {
+            width: 100%;
+            height: 100%;
+            background: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .mermaid {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="diagram-container">
+        <div class="mermaid">
+            flowchart TD
+            %% Streamlined 7-Layer Security Flow
+            A[🌐 USER REQUEST] --> B{🛡️ CLIENT<br />INPUT VALID?}
+            B -->|❌| X[🚫 BLOCKED]
+            B -->|✅| C{⚡ MIDDLEWARE<br />REQUEST OK?}
+
+            C -->|❌| X
+            C -->|✅| D{🔐 USER TYPE?}
+
+            %% Three User Tiers - Compact
+            D -->|👑| F[ADMIN<br />2FA + Global]
+            D -->|👤| G[EMPLOYEE<br />2FA + Dept]
+            D -->|🧑‍💼| H[CLIENT<br />Portal Only]
+
+            F --> F1{VALID?}
+            G --> G1{VALID?}
+            H --> H1{VALID?}
+
+            F1 -->|❌| X
+            F1 -->|✅| I{🎯 RBAC<br />PERMISSIONS?}
+            G1 -->|❌| X
+            G1 -->|✅| I
+            H1 -->|❌| X
+            H1 -->|✅| I
+
+            %% Final Security & Business Layers
+            I -->|❌| X
+            I -->|✅| J{⚡ BUSINESS<br />LOGIC OK?}
+
+            J -->|❌| X
+            J -->|✅| K[📊 DATA ACCESS]
+
+            K --> L[✅ SUCCESS]
+
+            %% Monitoring
+            X --> M[� SECURITY ALERT]
+            L --> N[📝 AUDIT LOG]
+
+            %% Large Text Styling
+            style A fill:#e3f2fd,stroke:#1976d2,stroke-width:6px,color:#000,font-size:24px,font-weight:bold
+            style L fill:#c8e6c9,stroke:#388e3c,stroke-width:6px,color:#000,font-size:24px,font-weight:bold
+            style X fill:#ffcdd2,stroke:#d32f2f,stroke-width:6px,color:#000,font-size:24px,font-weight:bold
+
+            %% Decision Points - Large Text
+            style B fill:#fff3e0,stroke:#f57c00,stroke-width:5px,color:#000,font-size:20px,font-weight:bold
+            style C fill:#f3e5f5,stroke:#7b1fa2,stroke-width:5px,color:#000,font-size:20px,font-weight:bold
+            style D fill:#e1f5fe,stroke:#0288d1,stroke-width:5px,color:#000,font-size:20px,font-weight:bold
+            style I fill:#fce4ec,stroke:#c2185b,stroke-width:5px,color:#000,font-size:20px,font-weight:bold
+
+            %% User Tiers - Large Text
+            style F fill:#ffebee,stroke:#d32f2f,stroke-width:5px,color:#000,font-size:18px,font-weight:bold
+            style G fill:#e8f5e8,stroke:#388e3c,stroke-width:5px,color:#000,font-size:18px,font-weight:bold
+            style H fill:#e1f5fe,stroke:#1976d2,stroke-width:5px,color:#000,font-size:18px,font-weight:bold
+
+            %% Validation Steps
+            style F1 fill:#ffebee,stroke:#d32f2f,stroke-width:4px,color:#000,font-size:16px,font-weight:bold
+            style G1 fill:#e8f5e8,stroke:#388e3c,stroke-width:4px,color:#000,font-size:16px,font-weight:bold
+            style H1 fill:#e1f5fe,stroke:#1976d2,stroke-width:4px,color:#000,font-size:16px,font-weight:bold
+
+            %% Business & Data Layers
+            style J fill:#fff9c4,stroke:#fbc02d,stroke-width:5px,color:#000,font-size:18px,font-weight:bold
+            style K fill:#e8eaf6,stroke:#3f51b5,stroke-width:5px,color:#000,font-size:18px,font-weight:bold
+
+            %% Monitoring
+            style M fill:#fff3e0,stroke:#f57c00,stroke-width:5px,color:#000,font-size:18px,font-weight:bold
+            style N fill:#c8e6c9,stroke:#388e3c,stroke-width:5px,color:#000,font-size:18px,font-weight:bold
+        </div>
+    </div>
+</body>
+
+</html>

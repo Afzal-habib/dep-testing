@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Mermaid Diagram Preview (Light Mode with Colors)</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <style>
+        .cluster-label p {
+            font-size: 1.2rem !important;
+        }
+    </style>
+    <script>
+        mermaid.initialize({
+            theme: 'default',
+            startOnLoad: true
+        });
+    </script>
+</head>
+
+<body style="background-color: white;">
+    <h1>Complete FLow Diagram</h1>
+    <div class="mermaid">
+        flowchart TD
+        classDef admin fill:#e6f3ff,stroke:#4a90e2
+        classDef client fill:#f0f9e8,stroke:#74c476
+        classDef sales fill:#fee6ce,stroke:#fd8d3c
+        classDef support fill:#f2f0f7,stroke:#756bb1
+        classDef manager fill:#fee0d2,stroke:#fc9272
+        classDef team fill:#e5f5e0,stroke:#74c476
+
+        subgraph "Admin (1)"
+        A[Manages User's Role]
+        end
+        subgraph "Client Portal"
+        CP1[View Project Status]
+        CP2[Raise Ticket]
+        CP3[Update Project Status]
+        CP4[View Projects]
+        CP5[View Tasks]
+        end
+        subgraph "Client (5)"
+        C1[Provide Basic Info]
+        C2[Confirm Project Info/Payment]
+        C3[Share More Details]
+        C4[Review Quote]
+        C5[Submit Full Project Info]
+        end
+        subgraph "Sales Manager (2)"
+        SM[Create Ticket]
+        end
+        subgraph "Sales Closer (3)"
+        SC[Initial Client Interaction]
+        end
+        subgraph "Sales Agent (4)"
+        SA1[Gather Client Details]
+        SA2[Send Quote]
+        SA3[Import Quote Data]
+        end
+        subgraph "Support Manager (6)"
+        SPM[Handle Client/Project Info]
+        end
+        subgraph "Support Agent (7)"
+        SPA1[Respond to Client]
+        SPA2[Update Project/Tasks]
+        end
+        subgraph "IT/Dept Manager (8)"
+        DM1[Approve Projects]
+        DM2[Notify Project Manager]
+        end
+        subgraph "Project Manager"
+        PM1[Approve Project]
+        PM2[Assign Tasks]
+        end
+        subgraph "Team Lead (9)"
+        TL1[Create Subtasks]
+        TL2[Assign to Team]
+        TL3[Update Project Status]
+        end
+        subgraph "Team Member (10)"
+        TM1[Execute Tasks]
+        TM2[Report Progress]
+        end
+
+        %% Admin flows
+        A -->|Admin Control| DM1
+        A -->|Admin Control| PM1
+        A -->|Admin Control| SM
+        A -->|Admin Control| SPM
+
+        %% Client Portal flows
+        CP1 -->|View| CP4
+        CP4 -->|Access| CP5
+        CP2 -->|Create| SM
+        CP3 -->|Update| SPA2
+
+        %% Client flows
+        C1 -->|Submit| SC
+        C2 -->|Confirm| SC
+        C3 -->|Provide| SA1
+        C4 -->|Review| C5
+        C5 -->|Submit| SA3
+
+        %% Sales flows
+        SM -->|Assign| SC
+        SC -->|Forward| SA1
+        SA1 -->|Generate| SA2
+        SA2 -->|Process| SA3
+        SA3 -->|Transfer| SPM
+
+        %% Support flows
+        SPM -->|Delegate| SPA1
+        SPA1 -->|Handle| SPA2
+        SPA2 -->|Forward| DM1
+
+        %% Management flows
+        DM1 -->|Approve| DM2
+        DM2 -->|Notify| PM1
+        PM1 -->|Approve| PM2
+        PM2 -->|Assign| TL1
+
+        %% Team flows
+        TL1 -->|Distribute| TL2
+        TL2 -->|Assign| TM1
+        TM1 -->|Complete| TM2
+        TM2 -->|Report| TL3
+        TL3 -->|Update| SPA2
+        TL3 -->|Update| CP1
+
+        %% Apply classes
+        class A admin
+        class C1,C2,C3,C4,C5,CP1,CP2,CP3,CP4,CP5 client
+        class SM,SC,SA1,SA2,SA3 sales
+        class SPM,SPA1,SPA2 support
+        class DM1,DM2,PM1,PM2 manager
+        class TL1,TL2,TL3,TM1,TM2 team
+    </div>
+</body>
+
+</html>

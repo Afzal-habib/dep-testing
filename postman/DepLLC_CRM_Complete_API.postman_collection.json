@@ -1,0 +1,1500 @@
+{
+  "info": {
+    "name": "Digi Era Pro CRM - Complete API Collection",
+    "description": "Comprehensive API collection for Digi Era Pro CRM system including Authentication, Users, Roles, Departments, and System Permissions management",
+    "version": "1.0.0",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "sessionCookie",
+      "value": "",
+      "type": "string",
+      "description": "NextAuth.js session cookie"
+    },
+    {
+      "key": "csrfToken",
+      "value": "",
+      "type": "string",
+      "description": "CSRF token for NextAuth"
+    },
+    {
+      "key": "userId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "roleId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "departmentId",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "1. Get CSRF Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Clear previous tokens when getting new CSRF token",
+                  "pm.environment.unset('sessionCookie');",
+                  "pm.environment.unset('userId');",
+                  "console.log('🧹 Cleared previous session data');",
+                  "",
+                  "if (responseCode.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.csrfToken) {",
+                  "        pm.environment.set('csrfToken', response.csrfToken);",
+                  "        console.log('✅ CSRF token obtained:', response.csrfToken.substring(0, 20) + '...');",
+                  "    } else {",
+                  "        console.log('❌ No CSRF token in response');",
+                  "    }",
+                  "} else {",
+                  "    console.log('❌ Failed to get CSRF token:', responseCode.code);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/csrf",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "csrf"]
+            },
+            "description": "Get CSRF token required for NextAuth authentication"
+          }
+        },
+        {
+          "name": "2. Logout (Clear Session)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "console.log('🧹 Clearing any existing session...');",
+                  "",
+                  "// Clear all stored session and user variables",
+                  "pm.environment.unset('sessionCookie');",
+                  "pm.environment.unset('userId');",
+                  "pm.environment.unset('roleId');",
+                  "pm.environment.unset('departmentId');",
+                  "pm.environment.unset('expectedUserEmail');",
+                  "pm.environment.unset('currentUserEmail');",
+                  "pm.environment.unset('currentUserRole');",
+                  "",
+                  "pm.collectionVariables.unset('sessionCookie');",
+                  "pm.collectionVariables.unset('userId');",
+                  "",
+                  "console.log('✅ All session and user variables cleared');",
+                  "",
+                  "if (pm.response.code === 200) {",
+                  "    console.log('✅ Logout successful');",
+                  "} else {",
+                  "    console.log('ℹ️ No existing session to logout from');",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              },
+              {
+                "key": "Cookie",
+                "value": "{{sessionCookie}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "csrfToken",
+                  "value": "{{csrfToken}}",
+                  "type": "text"
+                },
+                {
+                  "key": "callbackUrl",
+                  "value": "{{baseUrl}}/auth/login",
+                  "type": "text"
+                },
+                {
+                  "key": "json",
+                  "value": "true",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/signout",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "signout"]
+            },
+            "description": "Clear any existing session before logging in with new user"
+          }
+        },
+        {
+          "name": "3. Login with NextAuth",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Enhanced login verification and cookie extraction",
+                  "console.log('🔐 Processing login response...');",
+                  "console.log('� Request Email:', pm.request.body.urlencoded.get('email'));",
+                  "console.log('📊 Response Status:', pm.response.code);",
+                  "",
+                  "if (pm.response.code === 200) {",
+                  "    console.log('✅ Login request successful');",
+                  "    ",
+                  "    // Get all Set-Cookie headers",
+                  "    const setCookieHeaders = pm.response.headers.all().filter(header => ",
+                  "        header.key.toLowerCase() === 'set-cookie'",
+                  "    );",
+                  "    ",
+                  "    let sessionToken = null;",
+                  "    let csrfToken = null;",
+                  "    ",
+                  "    console.log('🍪 Found', setCookieHeaders.length, 'Set-Cookie headers');",
+                  "    ",
+                  "    // Parse all Set-Cookie headers",
+                  "    setCookieHeaders.forEach((header, index) => {",
+                  "        const cookieValue = header.value;",
+                  "        console.log(`🍪 Cookie ${index + 1}:`, cookieValue.substring(0, 60) + '...');",
+                  "        ",
+                  "        // Extract NextAuth session token",
+                  "        if (cookieValue.includes('next-auth.session-token=') || cookieValue.includes('__Secure-next-auth.session-token=')) {",
+                  "            const match = cookieValue.match(/(?:__Secure-)?next-auth\\.session-token=([^;\\s]+)/);",
+                  "            if (match) {",
+                  "                sessionToken = match[1];",
+                  "                console.log('✅ Session token extracted:', sessionToken.substring(0, 20) + '...');",
+                  "            }",
+                  "        }",
+                  "        ",
+                  "        // Extract CSRF token",
+                  "        if (cookieValue.includes('next-auth.csrf-token=') || cookieValue.includes('__Host-next-auth.csrf-token=')) {",
+                  "        const match = cookieValue.match(/(?:__Host-)?next-auth\\.csrf-token=([^;\\s]+)/);",
+                  "        if (match) {",
+                  "            csrfToken = match[1];",
+                  "            console.log('✅ CSRF token found in cookie:', csrfToken.substring(0, 20) + '...');",
+                  "        }",
+                  "    }",
+                  "    ",
+                  "    // Extract callback URL",
+                  "    if (cookieValue.includes('next-auth.callback-url=')) {",
+                  "        const match = cookieValue.match(/next-auth\\.callback-url=([^;\\s]+)/);",
+                  "        if (match) {",
+                  "            callbackUrl = decodeURIComponent(match[1]);",
+                  "            console.log('✅ Callback URL found:', callbackUrl);",
+                  "        }",
+                  "    }",
+                  "});",
+                  "",
+                  "// Update environment variables with proper cookie format",
+                  "if (sessionToken) {",
+                  "    // Store the full cookie string, not just the token",
+                  "    const fullCookie = cookieValue.includes('__Secure-') ? ",
+                  "        `__Secure-next-auth.session-token=${sessionToken}` : ",
+                  "        `next-auth.session-token=${sessionToken}`;",
+                  "    pm.environment.set('sessionCookie', fullCookie);",
+                  "    pm.collectionVariables.set('sessionCookie', fullCookie);",
+                  "    console.log('💾 Session cookie saved:', fullCookie.substring(0, 50) + '...');",
+                  "    ",
+                  "    // Store expected user email for verification",
+                  "    pm.environment.set('expectedUserEmail', pm.request.body.urlencoded.get('email'));",
+                  "    console.log('💾 Expected user stored:', pm.request.body.urlencoded.get('email'));",
+                  "} else {",
+                  "    console.log('⚠️ No session token found in response');",
+                  "}",
+                  "",
+                  "if (csrfToken) {",
+                  "    pm.environment.set('csrfToken', csrfToken);",
+                  "    console.log('💾 CSRF token updated from login response');",
+                  "}",
+                  "",
+                  "// Handle different response types",
+                  "if (responseCode.code === 200) {",
+                  "    console.log('✅ Login request processed successfully');",
+                  "    ",
+                  "    // Check if response contains URL (redirect response)",
+                  "    try {",
+                  "        const response = pm.response.json();",
+                  "        if (response.url) {",
+                  "            console.log('🔄 Login redirect URL:', response.url);",
+                  "        }",
+                  "    } catch (e) {",
+                  "        // Response might not be JSON, check as text",
+                  "        const responseText = pm.response.text();",
+                  "        if (responseText.includes('url')) {",
+                  "            console.log('🔄 Login response (text):', responseText.substring(0, 100) + '...');",
+                  "        }",
+                  "    }",
+                  "} else if (responseCode.code === 302) {",
+                  "    console.log('🔄 Login redirect (302) - this is normal for NextAuth');",
+                  "} else {",
+                  "    console.log('❌ Login failed with status:', responseCode.code);",
+                  "    console.log('Response:', pm.response.text());",
+                  "}",
+                  "",
+                  "// Debug: Show current environment state",
+                  "console.log('🔍 Current tokens:');",
+                  "console.log('  CSRF:', pm.environment.get('csrfToken') ? 'SET' : 'NOT SET');",
+                  "console.log('  Session:', pm.environment.get('sessionCookie') ? 'SET' : 'NOT SET');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "csrfToken",
+                  "value": "{{csrfToken}}",
+                  "type": "text"
+                },
+                {
+                  "key": "email",
+                  "value": "contact@abccompany.com",
+                  "type": "text",
+                  "description": "Change this to test different user permissions"
+                },
+                {
+                  "key": "password",
+                  "value": "Client@123",
+                  "type": "text",
+                  "description": "Use the correct password for the test user"
+                },
+                {
+                  "key": "callbackUrl",
+                  "value": "{{baseUrl}}/dashboard",
+                  "type": "text"
+                },
+                {
+                  "key": "redirect",
+                  "value": "false",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/signin/credentials",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "signin", "credentials"]
+            },
+            "description": "Login with NextAuth credentials provider"
+          }
+        },
+        {
+          "name": "4. Get Session",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (responseCode.code === 200) {",
+                  "    try {",
+                  "        const response = pm.response.json();",
+                  "        if (response.user) {",
+                  "            // Clear any existing user data first",
+                  "            pm.environment.unset('userId');",
+                  "            pm.environment.unset('roleId');",
+                  "            pm.environment.unset('departmentId');",
+                  "            ",
+                  "            // Set new user data",
+                  "            const userId = response.user.id || response.user._id;",
+                  "            pm.environment.set('userId', userId);",
+                  "            ",
+                  "            console.log('🎉 USER SESSION RETRIEVED');",
+                  "            console.log('👤 User Name:', response.user.name);",
+                  "            console.log('📧 User Email:', response.user.email);",
+                  "            console.log('🆔 User ID:', userId);",
+                  "            ",
+                  "            // Verify this is the expected user from login",
+                  "            const expectedEmail = pm.environment.get('expectedUserEmail');",
+                  "            if (expectedEmail) {",
+                  "                if (response.user.email === expectedEmail) {",
+                  "                    console.log('✅ CORRECT USER VERIFICATION: Expected', expectedEmail, 'and got', response.user.email);",
+                  "                } else {",
+                  "                    console.log('⚠️ USER MISMATCH: Expected', expectedEmail, 'but got', response.user.email);",
+                  "                    console.log('🔄 This suggests session persistence from previous login!');",
+                  "                }",
+                  "            } else {",
+                  "                console.log('ℹ️ No expected user email set for verification');",
+                  "            }",
+                  "            ",
+                  "            if (response.user.role) {",
+                  "                console.log('🏷️ User Role:', response.user.role);",
+                  "                if (typeof response.user.role === 'object' && response.user.role._id) {",
+                  "                    pm.environment.set('roleId', response.user.role._id);",
+                  "                    console.log('💾 Role ID saved:', response.user.role._id);",
+                  "                }",
+                  "            }",
+                  "            ",
+                  "            if (response.user.department) {",
+                  "                console.log('🏢 Department:', response.user.department);",
+                  "                if (typeof response.user.department === 'object' && response.user.department._id) {",
+                  "                    pm.environment.set('departmentId', response.user.department._id);",
+                  "                    console.log('💾 Department ID saved:', response.user.department._id);",
+                  "                }",
+                  "            }",
+                  "            ",
+                  "            console.log('✅ Session validated successfully!');",
+                  "        } else {",
+                  "            console.log('❌ No user found in session response');",
+                  "            console.log('Response structure:', JSON.stringify(response, null, 2));",
+                  "        }",
+                  "    } catch (e) {",
+                  "        console.log('❌ Error parsing session response:', e.message);",
+                  "        console.log('Raw response:', pm.response.text());",
+                  "    }",
+                  "} else {",
+                  "    console.log('❌ Session check failed with status:', responseCode.code);",
+                  "    if (responseCode.code === 401) {",
+                  "        console.log('🔒 Session expired or invalid. Please login again.');",
+                  "        pm.environment.unset('sessionCookie');",
+                  "        pm.environment.unset('userId');",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "next-auth.session-token={{sessionCookie}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/session",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "session"]
+            },
+            "description": "Verify session and get user information"
+          }
+        },
+        {
+          "name": "5. Test Session Permissions",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "console.log('🔍 Checking session permissions...');",
+                  "",
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    console.log('✅ Session data retrieved successfully');",
+                  "    console.log('👤 User:', response.user?.name || 'Unknown');",
+                  "    console.log('📧 Email:', response.user?.email || 'Unknown');",
+                  "    console.log('🏷️ Role:', response.user?.role?.name || 'No role');",
+                  "    console.log('🔑 Permissions:', response.user?.permissions?.length || 0, 'permissions');",
+                  "    ",
+                  "    // Log specific permissions for debugging",
+                  "    if (response.user?.permissions && response.user.permissions.length > 0) {",
+                  "        console.log('📝 Permission details:');",
+                  "        response.user.permissions.forEach(perm => {",
+                  "            console.log(`  - ${perm.resource}: [${perm.actions.join(', ')}]`);",
+                  "        });",
+                  "    } else {",
+                  "        console.log('⚠️ No permissions found in session - this will cause API access issues');",
+                  "    }",
+                  "} else {",
+                  "    console.log('❌ Failed to get session permissions:', pm.response.text());",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "{{sessionCookie}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/session",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "session"]
+            },
+            "description": "Test and validate session permissions after login"
+          }
+        },
+        {
+          "name": "6. Alternative - Custom Login API",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (responseCode.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.success && response.user) {",
+                  "        pm.environment.set('userId', response.user.id);",
+                  "        console.log('✅ Custom login successful, user ID saved:', response.user.id);",
+                  "        console.log('ℹ️ Note: This only validates credentials, doesn\\'t create session');",
+                  "    }",
+                  "} else {",
+                  "    console.log('❌ Login failed:', responseCode.code);",
+                  "    const response = pm.response.json();",
+                  "    console.log('Error:', response.error);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"superadmin@gmail.com\",\n  \"password\": \"your-password\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "login"]
+            },
+            "description": "Custom login endpoint (validates credentials but doesn't create session)"
+          }
+        },
+        {
+          "name": "Login - Method Not Allowed (GET)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "login"]
+            },
+            "description": "Test method not allowed for login endpoint"
+          }
+        }
+      ],
+      "description": "Authentication endpoints for user login and session management"
+    },
+    {
+      "name": "Debug & Testing",
+      "item": [
+        {
+          "name": "Test Basic Permission (Debug)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "console.log('🔍 Testing basic permission check...');",
+                  "",
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    console.log('✅ Permission check passed!');",
+                  "    console.log('👤 User:', response.debug.sessionUser.name);",
+                  "    console.log('📧 Email:', response.debug.sessionUser.email);",
+                  "    console.log('🏷️ Role:', response.debug.sessionUser.role?.name);",
+                  "    console.log('🔑 Permissions:', response.debug.sessionUser.permissions?.length || 0);",
+                  "} else {",
+                  "    console.log('❌ Permission check failed!');",
+                  "    const response = pm.response.json();",
+                  "    console.log('Error:', response.debug?.errorMessage);",
+                  "    console.log('Status:', response.debug?.errorStatus);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "{{sessionCookie}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/debug/permissions",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "debug", "permissions"]
+            },
+            "description": "Test basic permission checking - should work for any authenticated user"
+          }
+        },
+        {
+          "name": "Test Specific Permission",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "console.log('🔍 Testing specific permission...');",
+                  "",
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    console.log('✅ Permission check passed!');",
+                  "    console.log('🎯 Resource:', response.debug.permissionCheck.resource);",
+                  "    console.log('⚡ Action:', response.debug.permissionCheck.action);",
+                  "    console.log('👤 User:', response.debug.sessionUser.name);",
+                  "} else if (pm.response.code === 403) {",
+                  "    console.log('🚫 Permission denied (expected for limited users)');",
+                  "    const response = pm.response.json();",
+                  "    console.log('🎯 Tested Resource:', response.debug?.permissionCheck?.resource);",
+                  "    console.log('⚡ Tested Action:', response.debug?.permissionCheck?.action);",
+                  "    console.log('❌ Error:', response.debug?.errorMessage);",
+                  "} else {",
+                  "    console.log('❌ Unexpected error:', pm.response.code);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "{{sessionCookie}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\\n  \\\"resource\\\": \\\"users\\\",\\n  \\\"action\\\": \\\"read\\\"\\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/debug/permissions",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "debug", "permissions"]
+            },
+            "description": "Test specific resource/action permissions - change the body to test different permissions"
+          }
+        }
+      ],
+      "description": "Debug endpoints to test authentication and permission checking"
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "Get All Users",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "next-auth.session-token={{sessionCookie}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/users?page=1&limit=10&search=&role=&status=active&department=&sortBy=createdAt&sortOrder=desc",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number for pagination"
+                },
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "description": "Number of users per page"
+                },
+                {
+                  "key": "search",
+                  "value": "",
+                  "description": "Search term for name or email"
+                },
+                {
+                  "key": "role",
+                  "value": "",
+                  "description": "Filter by role ID"
+                },
+                {
+                  "key": "status",
+                  "value": "active",
+                  "description": "Filter by user status (active, inactive, suspended)"
+                },
+                {
+                  "key": "department",
+                  "value": "",
+                  "description": "Filter by department"
+                },
+                {
+                  "key": "sortBy",
+                  "value": "createdAt",
+                  "description": "Sort field (name, email, createdAt, etc.)"
+                },
+                {
+                  "key": "sortOrder",
+                  "value": "desc",
+                  "description": "Sort order (asc, desc)"
+                }
+              ]
+            },
+            "description": "Get paginated list of users with search and filter options"
+          }
+        },
+        {
+          "name": "Create User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (responseCode.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.success && response.data && response.data.user) {",
+                  "        pm.environment.set('userId', response.data.user._id);",
+                  "        console.log('User created, ID saved:', response.data.user._id);",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Cookie",
+                "value": "next-auth.session-token={{sessionCookie}}", "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Afzal Habib\",\n  \"email\": \"john.doe@example.com\",\n  \"password\": \"SecurePassword123!\",\n  \"role\": \"{{roleId}}\",\n  \"department\": \"{{departmentId}}\",\n  \"position\": \"Software Developer\",\n  \"phone\": \"+1234567890\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users"]
+            },
+            "description": "Create a new user account"
+          }
+        },
+        {
+          "name": "Get User by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "next-auth.session-token={{sessionCookie}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/{{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "{{userId}}"]
+            },
+            "description": "Get specific user details by ID"
+          }
+        },
+        {
+          "name": "Update User",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Cookie",
+                "value": "next-auth.session-token={{sessionCookie}}", "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Afzal Habib Updated\",\n  \"position\": \"Senior Software Developer\",\n  \"phone\": \"+1234567891\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users/{{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "{{userId}}"]
+            },
+            "description": "Update user information"
+          }
+        },
+        {
+          "name": "Delete User",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "next-auth.session-token={{sessionCookie}}", "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/{{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "{{userId}}"]
+            },
+            "description": "Soft delete user (set status to inactive)"
+          }
+        },
+        {
+          "name": "Get Current User (Me)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "next-auth.session-token={{sessionCookie}}", "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "me"]
+            },
+            "description": "Get current authenticated user details with role and permissions"
+          }
+        }
+      ],
+      "description": "User management endpoints for CRUD operations"
+    },
+    {
+      "name": "Roles",
+      "item": [
+        {
+          "name": "Get All Roles",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "next-auth.session-token={{sessionCookie}}", "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/roles?page=1&limit=10&search=&department=&hierarchyLevel=&isSystemRole=&status=active&sortBy=hierarchyLevel&sortOrder=desc",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "roles"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number for pagination"
+                },
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "description": "Number of roles per page"
+                },
+                {
+                  "key": "search",
+                  "value": "",
+                  "description": "Search term for role name or description"
+                },
+                {
+                  "key": "department",
+                  "value": "",
+                  "description": "Filter by department ID"
+                },
+                {
+                  "key": "hierarchyLevel",
+                  "value": "",
+                  "description": "Filter by hierarchy level"
+                },
+                {
+                  "key": "isSystemRole",
+                  "value": "",
+                  "description": "Filter system roles (true/false)"
+                },
+                {
+                  "key": "status",
+                  "value": "active",
+                  "description": "Filter by status (active, inactive)"
+                },
+                {
+                  "key": "sortBy",
+                  "value": "hierarchyLevel",
+                  "description": "Sort field"
+                },
+                {
+                  "key": "sortOrder",
+                  "value": "desc",
+                  "description": "Sort order (asc, desc)"
+                }
+              ]
+            },
+            "description": "Get paginated list of roles with search and filter options"
+          }
+        },
+        {
+          "name": "Create Role",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (responseCode.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.success && response.data && response.data.role) {",
+                  "        pm.environment.set('roleId', response.data.role._id);",
+                  "        console.log('Role created, ID saved:', response.data.role._id);",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Cookie",
+                "value": "next-auth.session-token={{sessionCookie}}", "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"project_manager\",\n  \"displayName\": \"Project Manager\",\n  \"description\": \"Manages projects and teams\",\n  \"department\": \"{{departmentId}}\",\n  \"hierarchyLevel\": 6,\n  \"maxUsers\": 10,\n  \"permissions\": [\n    {\n      \"resource\": \"projects\",\n      \"actions\": [\"create\", \"read\", \"update\", \"delete\"],\n      \"conditions\": {\n        \"own\": true,\n        \"department\": true\n      }\n    },\n    {\n      \"resource\": \"users\",\n      \"actions\": [\"read\"],\n      \"conditions\": {\n        \"department\": true\n      }\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/roles",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "roles"]
+            },
+            "description": "Create a new role with permissions"
+          }
+        },
+        {
+          "name": "Get Role by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "next-auth.session-token={{sessionCookie}}", "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/roles/{{roleId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "roles", "{{roleId}}"]
+            },
+            "description": "Get specific role details by ID with statistics"
+          }
+        },
+        {
+          "name": "Update Role",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Cookie",
+                "value": "next-auth.session-token={{sessionCookie}}", "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"displayName\": \"Senior Project Manager\",\n  \"description\": \"Senior role for managing multiple projects\",\n  \"maxUsers\": 15,\n  \"hierarchyLevel\": 7\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/roles/{{roleId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "roles", "{{roleId}}"]
+            },
+            "description": "Update role information"
+          }
+        },
+        {
+          "name": "Delete Role",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "next-auth.session-token={{sessionCookie}}", "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/roles/{{roleId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "roles", "{{roleId}}"]
+            },
+            "description": "Soft delete role (set status to inactive)"
+          }
+        },
+        {
+          "name": "Update Role Permissions",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Cookie",
+                "value": "next-auth.session-token={{sessionCookie}}", "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"permissions\": [\n    {\n      \"resource\": \"projects\",\n      \"actions\": [\"create\", \"read\", \"update\", \"delete\", \"assign\"],\n      \"conditions\": {\n        \"own\": true,\n        \"department\": true,\n        \"subordinates\": true\n      }\n    },\n    {\n      \"resource\": \"users\",\n      \"actions\": [\"read\", \"update\"],\n      \"conditions\": {\n        \"department\": true,\n        \"subordinates\": true\n      }\n    },\n    {\n      \"resource\": \"reports\",\n      \"actions\": [\"read\", \"export\"],\n      \"conditions\": {\n        \"department\": true\n      }\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/roles/{{roleId}}/permissions",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "roles", "{{roleId}}", "permissions"]
+            },
+            "description": "Update only the permissions for a specific role"
+          }
+        }
+      ],
+      "description": "Role management endpoints for CRUD operations and permission management"
+    },
+    {
+      "name": "Departments",
+      "item": [
+        {
+          "name": "Get All Departments",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "next-auth.session-token={{sessionCookie}}", "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/departments?page=1&limit=10&search=&status=active&sortBy=createdAt&sortOrder=desc",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "departments"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number for pagination"
+                },
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "description": "Number of departments per page"
+                },
+                {
+                  "key": "search",
+                  "value": "",
+                  "description": "Search term for department name or description"
+                },
+                {
+                  "key": "status",
+                  "value": "active",
+                  "description": "Filter by status (active, inactive)"
+                },
+                {
+                  "key": "sortBy",
+                  "value": "createdAt",
+                  "description": "Sort field"
+                },
+                {
+                  "key": "sortOrder",
+                  "value": "desc",
+                  "description": "Sort order (asc, desc)"
+                }
+              ]
+            },
+            "description": "Get paginated list of departments with search and filter options"
+          }
+        },
+        {
+          "name": "Create Department",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (responseCode.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.success && response.data && response.data.department) {",
+                  "        pm.environment.set('departmentId', response.data.department._id);",
+                  "        console.log('Department created, ID saved:', response.data.department._id);",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Cookie",
+                "value": "next-auth.session-token={{sessionCookie}}", "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Engineering\",\n  \"description\": \"Software development and engineering team\",\n  \"status\": \"active\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/departments",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "departments"]
+            },
+            "description": "Create a new department"
+          }
+        },
+        {
+          "name": "Get Department by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "next-auth.session-token={{sessionCookie}}", "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/departments/{{departmentId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "departments", "{{departmentId}}"]
+            },
+            "description": "Get specific department details by ID"
+          }
+        },
+        {
+          "name": "Update Department",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Cookie",
+                "value": "next-auth.session-token={{sessionCookie}}", "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Software Engineering\",\n  \"description\": \"Advanced software development and engineering solutions\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/departments/{{departmentId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "departments", "{{departmentId}}"]
+            },
+            "description": "Update department information"
+          }
+        },
+        {
+          "name": "Delete Department",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "next-auth.session-token={{sessionCookie}}", "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/departments/{{departmentId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "departments", "{{departmentId}}"]
+            },
+            "description": "Soft delete department (set status to inactive)"
+          }
+        },
+        {
+          "name": "Get Department Roles",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "next-auth.session-token={{sessionCookie}}", "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/departments/{{departmentId}}/roles?includeInactive=false&includeUserCount=true&sortBy=hierarchyLevel&sortOrder=desc",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "departments", "{{departmentId}}", "roles"],
+              "query": [
+                {
+                  "key": "includeInactive",
+                  "value": "false",
+                  "description": "Include inactive roles"
+                },
+                {
+                  "key": "includeUserCount",
+                  "value": "true",
+                  "description": "Include user count for each role"
+                },
+                {
+                  "key": "sortBy",
+                  "value": "hierarchyLevel",
+                  "description": "Sort field"
+                },
+                {
+                  "key": "sortOrder",
+                  "value": "desc",
+                  "description": "Sort order (asc, desc)"
+                }
+              ]
+            },
+            "description": "Get all roles for a specific department with statistics"
+          }
+        },
+        {
+          "name": "Create Role for Department",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Cookie",
+                "value": "next-auth.session-token={{sessionCookie}}", "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"team_lead\",\n  \"displayName\": \"Team Lead\",\n  \"description\": \"Technical team leader\",\n  \"hierarchyLevel\": 5,\n  \"maxUsers\": 5,\n  \"permissions\": [\n    {\n      \"resource\": \"projects\",\n      \"actions\": [\"read\", \"update\"],\n      \"conditions\": {\n        \"own\": true,\n        \"department\": true\n      }\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/departments/{{departmentId}}/roles",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "departments", "{{departmentId}}", "roles"]
+            },
+            "description": "Create a new role specifically for this department"
+          }
+        }
+      ],
+      "description": "Department management endpoints for CRUD operations and department-specific roles"
+    },
+    {
+      "name": "System Permissions",
+      "item": [
+        {
+          "name": "Get All System Permissions",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "next-auth.session-token={{sessionCookie}}", "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/system-permissions?category=&resource=&includeInactive=false",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "system-permissions"],
+              "query": [
+                {
+                  "key": "category",
+                  "value": "",
+                  "description": "Filter by permission category"
+                },
+                {
+                  "key": "resource",
+                  "value": "",
+                  "description": "Filter by resource type"
+                },
+                {
+                  "key": "includeInactive",
+                  "value": "false",
+                  "description": "Include inactive permissions"
+                }
+              ]
+            },
+            "description": "Get all available system permissions grouped by category"
+          }
+        },
+        {
+          "name": "Get System Permissions - By Category",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "next-auth.session-token={{sessionCookie}}", "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/system-permissions?category=users&includeInactive=false",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "system-permissions"],
+              "query": [
+                {
+                  "key": "category",
+                  "value": "users",
+                  "description": "Filter by specific category (users, roles, departments, etc.)"
+                },
+                {
+                  "key": "includeInactive",
+                  "value": "false",
+                  "description": "Include inactive permissions"
+                }
+              ]
+            },
+            "description": "Get system permissions filtered by specific category"
+          }
+        },
+        {
+          "name": "Get System Permissions - By Resource",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "next-auth.session-token={{sessionCookie}}", "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/system-permissions?resource=users&includeInactive=false",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "system-permissions"],
+              "query": [
+                {
+                  "key": "resource",
+                  "value": "users",
+                  "description": "Filter by specific resource type"
+                },
+                {
+                  "key": "includeInactive",
+                  "value": "false",
+                  "description": "Include inactive permissions"
+                }
+              ]
+            },
+            "description": "Get system permissions filtered by specific resource"
+          }
+        }
+      ],
+      "description": "System permissions endpoints for retrieving available permissions and actions"
+    },
+    {
+      "name": "NextAuth Endpoints",
+      "item": [
+        {
+          "name": "NextAuth - Session (GET)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "next-auth.session-token={{sessionCookie}}", "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/session",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "session"]
+            },
+            "description": "Get current session information via NextAuth"
+          }
+        },
+        {
+          "name": "NextAuth - Providers",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/providers",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "providers"]
+            },
+            "description": "Get available authentication providers"
+          }
+        },
+        {
+          "name": "NextAuth - CSRF Token",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/csrf",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "csrf"]
+            },
+            "description": "Get CSRF token for form submissions"
+          }
+        }
+      ],
+      "description": "NextAuth.js endpoints for session management and authentication flow"
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Auto-set base URL if not already set",
+          "if (!pm.environment.get('baseUrl')) {",
+          "    pm.environment.set('baseUrl', 'http://localhost:3000');",
+          "}",
+          "",
+          "// Log request details for debugging",
+          "console.log('Making request to:', pm.request.url.toString());",
+          "if (pm.request.method !== 'GET') {",
+          "    console.log('Request body:', pm.request.body);",
+          "}"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Global response logging",
+          "console.log('🔍 Response status:', pm.response.code);",
+          "console.log('⏱️ Response time:', pm.response.responseTime + 'ms');",
+          "",
+          "// Enhanced 401 handling for session-based auth",
+          "if (pm.response.code === 401) {",
+          "    console.log('🔒 401 Unauthorized - Session authentication failed');",
+          "    console.log('💡 Suggestion: Run the authentication sequence:');",
+          "    console.log('   1. Get CSRF Token');",
+          "    console.log('   2. Login with NextAuth');",
+          "    console.log('   3. Get Session');",
+          "    ",
+          "    const sessionCookie = pm.environment.get('sessionCookie');",
+          "    if (!sessionCookie) {",
+          "        console.log('❌ No session cookie found. Please login first.');",
+          "    } else {",
+          "        console.log('⚠️ Session cookie exists but may be expired.');",
+          "        console.log('🔄 Try re-running the authentication sequence.');",
+          "    }",
+          "}",
+          "",
+          "// Check for other common error patterns",
+          "if (pm.response.code >= 400 && pm.response.code !== 401) {",
+          "    console.log('❌ Error response body:', pm.response.text());",
+          "    ",
+          "    if (pm.response.code === 403) {",
+          "        console.log('🚫 403 Forbidden - Insufficient permissions');",
+          "        console.log('💡 Check user role and permissions');",
+          "    } else if (pm.response.code === 404) {",
+          "        console.log('🔍 404 Not Found - Resource does not exist');",
+          "    } else if (pm.response.code === 429) {",
+          "        console.log('⏱️ 429 Too Many Requests - Rate limit exceeded');",
+          "        console.log('💡 Wait and retry, or check rate limiting configuration');",
+          "    }",
+          "}",
+          "",
+          "// Auto-save important IDs from successful responses",
+          "if (pm.response.code === 200 || pm.response.code === 201) {",
+          "    try {",
+          "        const response = pm.response.json();",
+          "        ",
+          "        // Handle NextAuth session response",
+          "        if (response.user && !response.success) {",
+          "            // This is likely a session response",
+          "            pm.environment.set('userId', response.user.id || response.user._id);",
+          "            console.log('✅ Session user ID saved:', response.user.id || response.user._id);",
+          "        }",
+          "        ",
+          "        // Handle API responses with success flag",
+          "        if (response.success && response.data) {",
+          "            // Auto-save user ID",
+          "            if (response.data.user && response.data.user._id) {",
+          "                pm.environment.set('userId', response.data.user._id);",
+          "                console.log('✅ User ID saved:', response.data.user._id);",
+          "            }",
+          "            // Auto-save role ID", 
+          "            if (response.data.role && response.data.role._id) {",
+          "                pm.environment.set('roleId', response.data.role._id);",
+          "                console.log('✅ Role ID saved:', response.data.role._id);",
+          "            }",
+          "            // Auto-save department ID",
+          "            if (response.data.department && response.data.department._id) {",
+          "                pm.environment.set('departmentId', response.data.department._id);",
+          "                console.log('✅ Department ID saved:', response.data.department._id);",
+          "            }",
+          "        }",
+          "    } catch (e) {",
+          "        // Ignore JSON parsing errors for non-JSON responses",
+          "    }",
+          "}",
+          "",
+          "// Session debugging helper",
+          "if (pm.response.code === 200 && pm.request.url.toString().includes('/auth/session')) {",
+          "    console.log('🔍 Session Debug Info:');",
+          "    console.log('  Session Cookie:', pm.environment.get('sessionCookie') ? 'SET' : 'NOT SET');",
+          "    console.log('  CSRF Token:', pm.environment.get('csrfToken') ? 'SET' : 'NOT SET');",
+          "    console.log('  User ID:', pm.environment.get('userId') || 'NOT SET');",
+          "}"
+        ]
+      }
+    }
+  ]
+}

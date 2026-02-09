@@ -1,0 +1,21 @@
+supabase_project_name : new-real-time
+db_password :    Afzal@12345Supabase
+
+
+
+# Connect to Supabase via connection pooling
+DATABASE_URL="postgresql://postgres.kkdcderwckpktfxersdk:Afzal@12345Supabase@aws-1-ap-south-1.pooler.supabase.com:6543/postgres?pgbouncer=true"
+
+# Direct connection to the database. Used for migrations
+DIRECT_DATABASE_URL="postgresql://postgres.kkdcderwckpktfxersdk:Afzal@12345Supabase@aws-1-ap-south-1.pooler.supabase.com:5432/postgres"
+
+
+
+
+
+NEXT_PUBLIC_SUPABASE_URL=https://kkdcderwckpktfxersdk.supabase.co
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY=sb_publishable_0lMtYgrxgXNCdUWSOTpdHA_8Ogqj-a5
+SUPABASE_SECRET_KEY=sb_secret_S7iS0a92tECg5oCH27EheA_vA9EvlDZ
+
+NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtrZGNkZXJ3Y2twa3RmeGVyc2RrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUzNzU3ODIsImV4cCI6MjA4MDk1MTc4Mn0.ewVs6s2L80P0SeWrVz2_4fNV8QpqcL5iuyohwqH2Y4o
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_OR_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtrZGNkZXJ3Y2twa3RmeGVyc2RrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUzNzU3ODIsImV4cCI6MjA4MDk1MTc4Mn0.ewVs6s2L80P0SeWrVz2_4fNV8QpqcL5iuyohwqH2Y4o

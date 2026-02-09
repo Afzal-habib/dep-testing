@@ -1,0 +1,363 @@
+erDiagram
+    USERS {
+        uuid id PK
+        string email UK
+        string password_hash
+        string first_name
+        string last_name
+        string phone
+        string avatar_url
+        uuid role_id FK
+        uuid department_id FK
+        json preferences
+        boolean is_active
+        boolean email_verified
+        datetime last_login
+        datetime created_at
+        datetime updated_at
+        string created_by FK
+    }
+    
+    ROLES {
+        uuid id PK
+        string name UK
+        string description
+        json permissions
+        integer hierarchy_level
+        boolean is_system_role
+        datetime created_at
+        datetime updated_at
+    }
+    
+    DEPARTMENTS {
+        uuid id PK
+        string name UK
+        string code UK
+        text description
+        uuid manager_id FK
+        uuid parent_department_id FK
+        decimal budget_allocated
+        boolean is_active
+        datetime created_at
+        datetime updated_at
+    }
+    
+    CLIENTS {
+        uuid id PK
+        string company_name
+        string contact_person
+        string email
+        string phone
+        string secondary_phone
+        text address
+        string city
+        string state
+        string country
+        string postal_code
+        string website
+        string industry
+        enum company_size
+        enum status
+        uuid assigned_sales_rep FK
+        uuid assigned_account_manager FK
+        decimal lifetime_value
+        date contract_start
+        date contract_end
+        json custom_fields
+        datetime created_at
+        datetime updated_at
+        string created_by FK
+    }
+    
+    PROJECTS {
+        uuid id PK
+        uuid client_id FK
+        string project_code UK
+        string title
+        text description
+        text objectives
+        enum category
+        enum status
+        enum priority
+        enum project_type
+        decimal budget_allocated
+        decimal budget_spent
+        decimal estimated_hours
+        decimal actual_hours
+        date start_date
+        date end_date
+        date actual_start_date
+        date actual_end_date
+        uuid project_manager_id FK
+        uuid department_id FK
+        uuid created_by FK
+        json milestones
+        json risk_factors
+        decimal completion_percentage
+        datetime created_at
+        datetime updated_at
+    }
+    
+    TASKS {
+        uuid id PK
+        uuid project_id FK
+        uuid parent_task_id FK
+        string task_code UK
+        string title
+        text description
+        text acceptance_criteria
+        enum status
+        enum priority
+        enum task_type
+        uuid assigned_to FK
+        uuid created_by FK
+        date due_date
+        date start_date
+        date completion_date
+        decimal estimated_hours
+        decimal actual_hours
+        decimal completion_percentage
+        json dependencies
+        json attachments
+        text notes
+        datetime created_at
+        datetime updated_at
+    }
+    
+    TASK_COMMENTS {
+        uuid id PK
+        uuid task_id FK
+        uuid user_id FK
+        text comment
+        enum comment_type
+        json attachments
+        boolean is_internal
+        datetime created_at
+        datetime updated_at
+    }
+    
+    TASK_HISTORY {
+        uuid id PK
+        uuid task_id FK
+        uuid user_id FK
+        string field_name
+        text old_value
+        text new_value
+        text change_reason
+        datetime created_at
+    }
+    
+    TIME_LOGS {
+        uuid id PK
+        uuid task_id FK
+        uuid user_id FK
+        decimal hours
+        text description
+        date log_date
+        time start_time
+        time end_time
+        boolean is_billable
+        decimal hourly_rate
+        enum status
+        uuid approved_by FK
+        datetime approved_at
+        datetime created_at
+        datetime updated_at
+    }
+    
+    COMMUNICATIONS {
+        uuid id PK
+        uuid project_id FK
+        uuid sender_id FK
+        uuid receiver_id FK
+        string subject
+        text message
+        enum communication_type
+        enum priority
+        boolean is_read
+        boolean is_internal
+        json attachments
+        uuid parent_message_id FK
+        datetime read_at
+        datetime created_at
+    }
+    
+    DOCUMENTS {
+        uuid id PK
+        uuid project_id FK
+        uuid task_id FK
+        string file_name
+        string original_name
+        string file_path
+        string file_type
+        integer file_size
+        string mime_type
+        uuid uploaded_by FK
+        enum document_type
+        enum access_level
+        string version
+        uuid parent_document_id FK
+        json metadata
+        boolean is_active
+        datetime created_at
+        datetime updated_at
+    }
+    
+    MEETINGS {
+        uuid id PK
+        uuid project_id FK
+        string title
+        text agenda
+        text notes
+        datetime scheduled_at
+        integer duration_minutes
+        uuid organizer_id FK
+        enum meeting_type
+        enum status
+        string meeting_link
+        json attendees
+        json action_items
+        datetime created_at
+        datetime updated_at
+    }
+    
+    INVOICES {
+        uuid id PK
+        uuid project_id FK
+        uuid client_id FK
+        string invoice_number UK
+        decimal amount
+        decimal tax_amount
+        decimal total_amount
+        enum status
+        date issue_date
+        date due_date
+        date paid_date
+        text payment_terms
+        json line_items
+        uuid created_by FK
+        datetime created_at
+        datetime updated_at
+    }
+    
+    PAYMENTS {
+        uuid id PK
+        uuid invoice_id FK
+        decimal amount
+        date payment_date
+        string payment_method
+        string transaction_id
+        enum status
+        text notes
+        uuid processed_by FK
+        datetime created_at
+    }
+    
+    NOTIFICATIONS {
+        uuid id PK
+        uuid user_id FK
+        string title
+        text message
+        enum notification_type
+        enum priority
+        boolean is_read
+        json data
+        datetime read_at
+        datetime created_at
+    }
+    
+    AUDIT_LOGS {
+        uuid id PK
+        uuid user_id FK
+        string entity_type
+        uuid entity_id
+        string action
+        json old_values
+        json new_values
+        string ip_address
+        string user_agent
+        datetime created_at
+    }
+    
+    PROJECT_TEMPLATES {
+        uuid id PK
+        string name
+        text description
+        enum category
+        json template_data
+        uuid created_by FK
+        boolean is_active
+        datetime created_at
+        datetime updated_at
+    }
+    
+    CUSTOM_FIELDS {
+        uuid id PK
+        string entity_type
+        string field_name
+        string field_label
+        enum field_type
+        json field_options
+        boolean is_required
+        integer sort_order
+        boolean is_active
+        datetime created_at
+    }
+    
+    INTEGRATIONS {
+        uuid id PK
+        string service_name
+        string service_type
+        json configuration
+        json credentials
+        boolean is_active
+        datetime last_sync
+        datetime created_at
+        datetime updated_at
+    }
+
+    %% Relationships
+    USERS ||--o{ ROLES : "has"
+    USERS ||--o{ DEPARTMENTS : "belongs_to"
+    DEPARTMENTS ||--o{ USERS : "managed_by"
+    DEPARTMENTS ||--o{ DEPARTMENTS : "parent_child"
+    
+    CLIENTS ||--o{ PROJECTS : "has"
+    USERS ||--o{ CLIENTS : "manages"
+    USERS ||--o{ CLIENTS : "account_manager"
+    
+    PROJECTS ||--o{ TASKS : "contains"
+    PROJECTS ||--o{ COMMUNICATIONS : "related_to"
+    PROJECTS ||--o{ DOCUMENTS : "contains"
+    PROJECTS ||--o{ MEETINGS : "scheduled_for"
+    PROJECTS ||--o{ INVOICES : "billed_for"
+    USERS ||--o{ PROJECTS : "manages"
+    DEPARTMENTS ||--o{ PROJECTS : "assigned_to"
+    
+    TASKS ||--o{ TASKS : "parent_child"
+    TASKS ||--o{ TASK_COMMENTS : "has"
+    TASKS ||--o{ TASK_HISTORY : "tracked"
+    TASKS ||--o{ TIME_LOGS : "logged_for"
+    TASKS ||--o{ DOCUMENTS : "attached_to"
+    USERS ||--o{ TASKS : "assigned_to"
+    USERS ||--o{ TASKS : "created_by"
+    
+    USERS ||--o{ TIME_LOGS : "logs"
+    USERS ||--o{ TIME_LOGS : "approves"
+    
+    USERS ||--o{ COMMUNICATIONS : "sends"
+    USERS ||--o{ COMMUNICATIONS : "receives"
+    COMMUNICATIONS ||--o{ COMMUNICATIONS : "replies_to"
+    
+    USERS ||--o{ DOCUMENTS : "uploads"
+    DOCUMENTS ||--o{ DOCUMENTS : "versions"
+    
+    USERS ||--o{ MEETINGS : "organizes"
+    
+    INVOICES ||--o{ PAYMENTS : "paid_by"
+    USERS ||--o{ INVOICES : "created_by"
+    USERS ||--o{ PAYMENTS : "processed_by"
+    
+    USERS ||--o{ NOTIFICATIONS : "receives"
+    USERS ||--o{ AUDIT_LOGS : "performs"
+    USERS ||--o{ PROJECT_TEMPLATES : "creates"

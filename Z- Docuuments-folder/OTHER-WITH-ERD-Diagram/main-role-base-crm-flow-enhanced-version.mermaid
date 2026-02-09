@@ -1,0 +1,85 @@
+flowchart TD
+subgraph "Admin (1)"
+A[Manages User's Role]
+end
+subgraph "Client Portal"
+CP1[View Project Status]
+CP2[Raise Ticket]
+CP3[Update Project Status]
+CP4[View Projects]
+CP5[View Tasks]
+end
+subgraph "Client (5)"
+C1[Provide Basic Info]
+C2[Confirm Project Info/Payment]
+C3[Share More Details]
+C4[Review Quote]
+C5[Submit Full Project Info]
+end
+subgraph "Sales Manager (2)"
+SM[Create Ticket]
+end
+subgraph "Sales Closer (3)"
+SC[Initial Client Interaction]
+end
+subgraph "Sales Agent (4)"
+SA1[Gather Client Details]
+SA2[Send Quote]
+SA3[Import Quote Data]
+end
+subgraph "Support Manager (6)"
+SPM[Handle Client/Project Info]
+end
+subgraph "Support Agent (7)"
+SPA1[Respond to Client]
+SPA2[Update Project/Tasks]
+end
+subgraph "IT/Dept Manager (8)"
+DM1[Approve Projects]
+DM2[Notify Project Manager]
+end
+subgraph "Project Manager"
+PM1[Approve Project]
+PM2[Assign Tasks]
+end
+subgraph "Team Lead (9)"
+TL1[Create Subtasks]
+TL2[Assign to Team]
+TL3[Update Project Status]
+end
+subgraph "Team Member (10)"
+TM1[Execute Tasks]
+TM2[Report Progress]
+end
+%% Clear Flow Links
+A --> DM1
+A --> PM1
+A --> SM
+A --> SPM
+CP1 --> CP4
+CP4 --> CP5
+CP2 --> SM
+CP3 --> SPA2
+C1 --> SC
+C2 --> SC
+C3 --> SA1
+C4 --> C5
+C5 --> SA3
+SM --> SC
+SC --> SA1
+SA1 --> SA2
+SA2 --> SA3
+SA3 --> SPM
+SPM --> SPA1
+SPA1 --> SPA2
+SPA2 --> DM1
+DM1 --> DM2
+DM2 --> PM1
+PM1 --> PM2
+PM2 --> TL1
+TL1 --> TL2
+TL2 --> TM1
+TM1 --> TM2
+TM2 --> TL3
+TL3 --> SPA2
+TL3 --> CP1
